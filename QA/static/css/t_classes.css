@@ -1,0 +1,15 @@
+.container{
+    justify-content: left;
+    align-items: start;
+    flex-grow: 1;
+    margin: 15px;
+}
+
+h1{
+    margin: 5px;
+}
+
+.class-code{
+    display: flex;
+    text-align: left;
+}

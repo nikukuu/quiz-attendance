@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} Q 'n A' {% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/teacher.css">
+    <link rel="stylesheet" href="/static/css/t_classes.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="flex-wrapper">
+        <div class="wrapper">
+            <h2>Q 'n A</h2>
+            <p>{{username}}</p>
+            <hr>
+            <h3>Classes</h3>
+                <ul>
+                    {% for cls in classes %}
+                        <li>
+                            <a href="{{ url_for('t_quiz', class_code=cls['class_code']) }}">
+                                {{ cls['class_name'] }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{url_for('t_classes')}}">New class</a>
+            <hr>
+            <h3>Account</h3>
+            <ul>
+                <li><a href="{{url_for('login')}}">Logout</a></li>
+                <li><a href="#">Account Info</a></li>
+            </ul>
+        </div>
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

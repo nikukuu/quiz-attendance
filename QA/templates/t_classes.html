@@ -1,0 +1,19 @@
+{% extends "teacher.html" %}
+{% block title %} Classes {% endblock %}
+
+{% block content %}
+<h1>Class Registration</h1>
+
+<form action="{{ url_for('t_classes') }}" method="POST">
+    <label for="class_name">Class Name:</label>
+    <input type="text" id="class_name" name="class_name" required>
+    <button type="submit">Create Class</button>
+</form>
+
+{% if new_class_code %}
+    <div class="class-code">
+        <p>Class Code: {{ new_class_code }}</p>
+    </div>
+{% endif %}
+
+{% endblock %}
