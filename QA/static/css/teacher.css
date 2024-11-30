@@ -65,3 +65,8 @@ h3 {
     margin-top: 20px;
     font-size: 1.5rem;
 }
+
+.flash.success {
+    font-weight: bold;
+    color: #155724;
+}

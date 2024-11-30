@@ -1,0 +1,9 @@
+{% extends "teacher.html" %}
+{% block title %} Account Info {% endblock %}
+
+{% block content %}
+<h1>Account Information</h1>
+    <p><strong>Username:</strong> {{ account['username'] }}</p>
+    <p><strong>Email:</strong> {{ account['email'] }}</p>
+    <p><strong>Joined At:</strong> {{ account['created_at'] }}</p>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "teacher.html" %}
+{% block title %} Manage Quiz {% endblock %}
+
+{% block content %}
+    <a href="{{ url_for('class_quizzes', class_code=class_code) }}" class="btn btn-secondary">Back</a>
+
+    <h1>Manage Quiz: {{ quiz['quiz_title'] }}</h1>
+
+    <!-- List of questions -->
+    <ul>
+        {% for question in questions %}
+            <li>
+                <strong>{{ question['question_text'] }}</strong>
+                <ul>
+                    {% for option in question['options'] %}
+                        <li {% if option['option_text'] == question['correct_answer'] %}style="font-weight: bold; color: green;"{% endif %}>
+                            {{ option['option_text'] }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <!-- Edit/Delete buttons -->
+                <a href="{{ url_for('edit_question', question_id=question['question_id'], quiz_id=quiz['quiz_id']) }}">Edit</a>
+                <form action="{{ url_for('delete_question', question_id=question['question_id']) }}" method="POST" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete this question?');">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Add question form -->
+    <h2>Add a New Question</h2>
+    <form action="{{ url_for('manage_quiz', quiz_id=quiz['quiz_id']) }}" method="POST">
+        <label for="question_text">Question:</label><br>
+        <textarea name="question_text" placeholder="Enter your question" required></textarea><br>
+
+        <!-- Input fields for multiple-choice options -->
+        <label for="options">Options:</label><br>
+        <input type="text" name="options[]" placeholder="Option 1" required><br>
+        <input type="text" name="options[]" placeholder="Option 2" required><br>
+        <input type="text" name="options[]" placeholder="Option 3" required><br>
+        <input type="text" name="options[]" placeholder="Option 4" required><br>
+
+        <!-- Dropdown for selecting the correct answer -->
+        <label for="correct_answer">Correct Answer:</label><br>
+        <select name="correct_answer" required>
+            <option value="" disabled selected>Select the correct answer</option>
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+            <option value="3">Option 3</option>
+            <option value="4">Option 4</option>
+        </select><br><br>
+
+        <button type="submit">Add Question</button>
+    </form>
+{% endblock %}

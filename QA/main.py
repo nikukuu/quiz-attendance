@@ -58,7 +58,6 @@ def login():
 
         if account:
             session['username'] = username
-            flash('Login successful!', 'success')
             return redirect(url_for('teacher'))
         else:
             flash('Incorrect username or password.', 'danger')
@@ -106,7 +105,6 @@ def student_log():
 
         if account:
             session['username'] = username
-            flash('Login successful!', 'success')
             return redirect(url_for('student'))
         else:
             flash('Incorrect username or password.', 'danger')
@@ -140,6 +138,28 @@ def student():
         return redirect(url_for('student_log'))
     
 #-------------------------------AUTHENTICATION--END--CODE-------------------------------#
+
+
+#-------------------------------ACCOUNT--INFORMATION-------------------------------------#
+
+@app.route('/t_acc_info')
+def t_acc_info():
+    if 'username' in session:
+        # Retrieve user details from the database
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM teacher WHERE username = %s', (session['username'],))
+        account = cursor.fetchone()
+
+        cursor.execute('SELECT class_name, class_code FROM t_classes')
+        classes = cursor.fetchall()
+        cursor.close()
+
+        return render_template('t_acc_info.html', account=account, username=session['username'], classes=classes)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+#-------------------------------ACCOUNT--INFORMATION--END--CODE---------------------------#
 
 @app.route('/t_classes', methods=['GET', 'POST'])
 def t_classes():
@@ -222,7 +242,174 @@ def delete_class(class_code):
     else:
         flash('You need to log in first', 'danger')
         return redirect(url_for('login'))
+    
+@app.route('/class_quizzes/<class_code>', methods=['GET', 'POST'])
+def class_quizzes(class_code):
+    if 'username' in session:
+        if request.method == 'POST':
+            quiz_title = request.form['quiz_title']
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('INSERT INTO quizzes (class_code, quiz_title) VALUES (%s, %s)', (class_code, quiz_title))
+            mysql.connection.commit()
+            cursor.close()
+            flash('Quiz added successfully!', 'success')
+            return redirect(url_for('class_quizzes', class_code=class_code))
 
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Fetch class info and quizzes
+        cursor.execute('SELECT * FROM t_classes WHERE class_code = %s', (class_code,))
+        selected_class = cursor.fetchone()
+
+        cursor.execute('SELECT * FROM quizzes WHERE class_code = %s', (class_code,))
+        quizzes = cursor.fetchall()
+
+        cursor.execute('SELECT class_name, class_code FROM t_classes')
+        classes = cursor.fetchall()
+
+        cursor.close()
+
+        return render_template('class_quizzes.html',
+                               selected_class=selected_class,
+                               quizzes=quizzes,
+                               username=session['username'],
+                               classes=classes)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+@app.route('/manage_quiz/<int:quiz_id>', methods=['GET', 'POST'])
+def manage_quiz(quiz_id):
+    if 'username' in session:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        if request.method == 'POST':
+            # Retrieve question and options from the form
+            question_text = request.form['question_text']
+            options = request.form.getlist('options[]')  # Get all options
+            correct_answer_index = int(request.form['correct_answer']) - 1  # Convert to 0-based index
+            correct_answer = options[correct_answer_index]  # Get the correct answer
+
+            # Insert the question into the database
+            cursor.execute(
+                'INSERT INTO quiz_questions (quiz_id, question_text, correct_answer) VALUES (%s, %s, %s)',
+                (quiz_id, question_text, correct_answer)
+            )
+            question_id = cursor.lastrowid  # Get the ID of the newly added question
+
+            # Insert options into the database
+            for option in options:
+                cursor.execute(
+                    'INSERT INTO quiz_options (question_id, option_text) VALUES (%s, %s)',
+                    (question_id, option)
+                )
+
+            mysql.connection.commit()
+            flash('Question added successfully!', 'success')
+            return redirect(url_for('manage_quiz', quiz_id=quiz_id))
+
+        # Fetch quiz details
+        cursor.execute('SELECT * FROM quizzes WHERE quiz_id = %s', (quiz_id,))
+        quiz = cursor.fetchone()
+        class_code = quiz['class_code']
+
+        # Fetch questions and their options
+        cursor.execute('SELECT * FROM quiz_questions WHERE quiz_id = %s', (quiz_id,))
+        questions = cursor.fetchall()
+
+        # Fetch options for each question
+        for question in questions:
+            cursor.execute('SELECT * FROM quiz_options WHERE question_id = %s', (question['question_id'],))
+            question['options'] = cursor.fetchall()
+
+        cursor.execute('SELECT class_name, class_code FROM t_classes')
+        classes = cursor.fetchall()
+        cursor.close()
+
+        return render_template('manage_quiz.html',
+                               quiz=quiz,
+                               questions=questions,
+                               username=session['username'],
+                               classes=classes, class_code=class_code)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+@app.route('/edit_question/<int:question_id>/<int:quiz_id>', methods=['GET', 'POST'])
+def edit_question(question_id, quiz_id):
+    if 'username' in session:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        if request.method == 'POST':
+            question_text = request.form['question_text']
+            options = request.form.getlist('options[]')
+            correct_answer_index = int(request.form['correct_answer']) - 1
+            correct_answer = options[correct_answer_index]
+
+            # Update question text and correct answer
+            cursor.execute(
+                'UPDATE quiz_questions SET question_text = %s, correct_answer = %s WHERE question_id = %s',
+                (question_text, correct_answer, question_id)
+            )
+
+            # Update options
+            cursor.execute('DELETE FROM quiz_options WHERE question_id = %s', (question_id,))
+            for option in options:
+                cursor.execute(
+                    'INSERT INTO quiz_options (question_id, option_text) VALUES (%s, %s)',
+                    (question_id, option)
+                )
+
+            mysql.connection.commit()
+            flash('Question updated successfully!', 'success')
+            return redirect(url_for('manage_quiz', quiz_id=quiz_id))
+
+        # Fetch existing question and options
+        cursor.execute('SELECT * FROM quiz_questions WHERE question_id = %s', (question_id,))
+        question = cursor.fetchone()
+        cursor.execute('SELECT * FROM quiz_options WHERE question_id = %s', (question_id,))
+        question['options'] = cursor.fetchall()
+
+        cursor.close()
+
+        return render_template('edit_question.html', question=question, quiz_id=quiz_id)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+
+@app.route('/delete_question/<int:question_id>', methods=['POST'])
+def delete_question(question_id):
+    if 'username' in session:
+        cursor = mysql.connection.cursor()
+        cursor.execute('DELETE FROM quiz_questions WHERE question_id = %s', (question_id,))
+        cursor.execute('DELETE FROM quiz_options WHERE question_id = %s', (question_id,))
+        mysql.connection.commit()
+        cursor.close()
+        flash('Question deleted successfully!', 'success')
+        return redirect(request.referrer)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+@app.route('/delete_quiz/<int:quiz_id>', methods=['POST'])
+def delete_quiz(quiz_id):
+    if 'username' in session:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # First, delete the quiz's options and questions
+        cursor.execute('DELETE FROM quiz_options WHERE question_id IN (SELECT question_id FROM quiz_questions WHERE quiz_id = %s)', (quiz_id,))
+        cursor.execute('DELETE FROM quiz_questions WHERE quiz_id = %s', (quiz_id,))
+
+        # Then, delete the quiz itself
+        cursor.execute('DELETE FROM quizzes WHERE quiz_id = %s', (quiz_id,))
+        
+        mysql.connection.commit()
+        cursor.close()
+
+        flash('Quiz deleted successfully!', 'success')
+        return redirect(url_for('class_quizzes', class_code=request.referrer.split("/")[-1]))
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
 
 if __name__=='__main__':
     app.run(debug=True)

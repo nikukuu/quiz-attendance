@@ -1,12 +1,12 @@
 {% extends "teacher.html" %}
-{% block title %} Classes {% endblock %}
+{% block title %} Class {% endblock %}
 
 {% block content %}
     {% if selected_class %}
         <h1>{{ selected_class['class_name'] }}</h1>
         <h3>Code: {{ selected_class['class_code'] }}</h3>
 
-        <a href="#">Add Quiz</a>
+        <a href="{{ url_for('class_quizzes', class_code=selected_class['class_code']) }}">Quizzes</a>
         <a href="#">Attendance</a>
         <a href="#">Statistics</a>
 

@@ -1,0 +1,77 @@
+{% extends "teacher.html" %}
+{% block title %} Add Quiz {% endblock %}
+
+{% block content %}
+    <h1>Add New Quiz</h1>
+    <form action="{{ url_for('t_createQ', class_code=class_code) }}" method="POST">
+        <!-- Quiz Title -->
+        <div class="form-group">
+            <label for="quiz-title">Quiz Title:</label>
+            <input type="text" id="quiz-title" name="quiz_title" required>
+        </div>
+        
+        <!-- Multiple Choice Questions -->
+        <div id="questions-container">
+            <div class="question">
+                <label>Question 1:</label>
+                <input type="text" name="questions[]" required>
+
+                <!-- Options for Question 1 -->
+                <div class="options">
+                    <label>Options:</label>
+                    <input type="text" name="options[]" required placeholder="Option 1">
+                    <input type="text" name="options[]" required placeholder="Option 2">
+                    <input type="text" name="options[]" required placeholder="Option 3">
+                    <input type="text" name="options[]" required placeholder="Option 4">
+                </div>
+
+                <!-- Correct Answer for Question 1 -->
+                <label>Correct Answer:</label>
+                <select name="correct_answer[]" required>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Add Question Button -->
+        <button type="button" onclick="addQuestion()">Add Another Question</button>
+        
+        <!-- Submit Quiz Button -->
+        <button type="submit">Submit Quiz</button>
+    </form>
+
+    <script>
+        let questionCount = 1;
+
+        function addQuestion() {
+            const container = document.getElementById('questions-container');
+            const questionHTML = `
+                <div class="question">
+                    <label>Question ${questionCount + 1}:</label>
+                    <input type="text" name="questions[]" required>
+
+                    <div class="options">
+                        <label>Options:</label>
+                        <input type="text" name="options[]" required placeholder="Option 1">
+                        <input type="text" name="options[]" required placeholder="Option 2">
+                        <input type="text" name="options[]" required placeholder="Option 3">
+                        <input type="text" name="options[]" required placeholder="Option 4">
+                    </div>
+
+                    <label>Correct Answer:</label>
+                    <select name="correct_answer[]" required>
+                        <option value="1">Option 1</option>
+                        <option value="2">Option 2</option>
+                        <option value="3">Option 3</option>
+                        <option value="4">Option 4</option>
+                    </select>
+                </div>`;
+            
+            container.insertAdjacentHTML('beforeend', questionHTML);
+            questionCount++;
+        }
+    </script>
+{% endblock %}
