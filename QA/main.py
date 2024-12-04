@@ -69,21 +69,27 @@ def login():
 @app.route('/student_reg', methods=['GET', 'POST'])
 def student_reg():
     if request.method == 'POST':
-
-        username = request.form['username']
-        email = request.form['email']
+        # Get form data
+        last_name = request.form['last_name']
+        first_name = request.form['first_name']
+        student_id = request.form['student_id']
         password = request.form['password']
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        cursor.execute('SELECT * FROM student WHERE username = %s', (username,))
+        # Check if student_id already exists
+        cursor.execute('SELECT * FROM student WHERE student_id = %s', (student_id,))
         account = cursor.fetchone()
 
         if account:
-            flash('Account already exists with this username.', 'danger')
+            flash('An account with this Student ID already exists.', 'danger')
             return redirect(url_for('student_reg'))
-        
-        cursor.execute('INSERT INTO student (username, email, password) VALUES (%s, %s, %s)', (username, email, password))
+
+        # Insert the new student data into the database
+        cursor.execute(
+            'INSERT INTO student (last_name, first_name, student_id, password) VALUES (%s, %s, %s, %s)',
+            (last_name, first_name, student_id, password)
+        )
         mysql.connection.commit()
         cursor.close()
 
@@ -95,21 +101,24 @@ def student_reg():
 @app.route('/student_log', methods=['GET', 'POST'])
 def student_log():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        student_id = request.form['student_id']  # Changed to use student_id
+        password = request.form['password']  # No change here
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
-        cursor.execute('SELECT * FROM student WHERE username = %s AND password = %s', (username, password))
+        # Query to check if student_id and password match
+        cursor.execute('SELECT * FROM student WHERE student_id = %s AND password = %s', (student_id, password))
         account = cursor.fetchone()
 
         if account:
-            session['username'] = username
-            return redirect(url_for('student'))
+            # Save student_id in session to track the logged-in user
+            session['student_id'] = student_id
+            session['full_name'] = f"{account['first_name']} {account['last_name']}"  # Optional: Store full name for display
+            return redirect(url_for('student'))  # Redirect to student dashboard
         else:
-            flash('Incorrect username or password.', 'danger')
+            flash('Incorrect Student ID or Password.', 'danger')
             return redirect(url_for('student_log'))
-        
+
     return render_template('student_log.html')
 
 @app.route('/teacher')
@@ -128,14 +137,6 @@ def teacher():
     else:
         flash('You need to log in first', 'danger')
         return redirect(url_for('login'))
-
-@app.route('/student')
-def student():
-    if 'username' in session:
-        return render_template('student.html', username=session['username'])
-    else:
-        flash('You need to log in first.', 'danger')
-        return redirect(url_for('student_log'))
     
 #-------------------------------AUTHENTICATION--END--CODE-------------------------------#
 
@@ -369,9 +370,17 @@ def edit_question(question_id, quiz_id):
         cursor.execute('SELECT * FROM quiz_options WHERE question_id = %s', (question_id,))
         question['options'] = cursor.fetchall()
 
+        cursor.execute('SELECT class_name, class_code FROM t_classes')
+        classes = cursor.fetchall()
+
         cursor.close()
 
-        return render_template('edit_question.html', question=question, quiz_id=quiz_id)
+        return render_template('edit_question.html', 
+                            question=question,  
+                            quiz_id=quiz_id,
+                            classes=classes,
+                            username=session['username'])
+
     else:
         flash('You need to log in first.', 'danger')
         return redirect(url_for('login'))
@@ -410,6 +419,117 @@ def delete_quiz(quiz_id):
     else:
         flash('You need to log in first.', 'danger')
         return redirect(url_for('login'))
+    
+
+#---------------------STUDENT------------------------------------------------------------------------------
+
+@app.route('/student')
+def student():
+    if 'student_id' in session:
+        student_id = session['student_id']
+        cursor = mysql.connection.cursor()
+        
+        # Fetch the classes the student has joined
+        cursor.execute(''' 
+            SELECT t_classes.class_name, t_classes.class_code
+            FROM t_classes
+            JOIN student_classes ON t_classes.id = student_classes.class_id
+            WHERE student_classes.student_id = %s
+        ''', (student_id,))
+        
+        # Get the classes the student has joined
+        classes = cursor.fetchall()
+        cursor.close()
+
+        # Convert tuple data to a list of dictionaries for easier access in template
+        class_list = [{'class_name': cls[0], 'class_code': cls[1]} for cls in classes]
+
+        # Pass the classes to the student.html template
+        return render_template('student.html', classes=class_list)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+
+@app.route('/s_join_class', methods=['POST'])
+def s_join_class():
+    if 'student_id' in session:
+        student_id = session['student_id']  # Get student_id from session
+        class_code = request.form.get('class_code')
+
+        cursor = mysql.connection.cursor()
+
+        # Check if class code exists in the t_classes table
+        cursor.execute('SELECT id, class_name, class_code FROM t_classes WHERE class_code = %s', (class_code,))
+        class_data = cursor.fetchone()
+
+        if class_data:
+            # Insert the student into the student_classes table (relationship table)
+            class_id = class_data[0]  # Extract class_id from the fetched data
+            cursor.execute('INSERT INTO student_classes (student_id, class_id) VALUES (%s, %s)',
+                           (student_id, class_id))
+            mysql.connection.commit()  # Use mysql.connection.commit() instead of conn.commit()
+            flash('Successfully joined the class!', 'success')
+
+            # Fetch all classes that the student is enrolled in
+            cursor.execute('''
+                SELECT t_classes.class_name, t_classes.class_code
+                FROM t_classes
+                JOIN student_classes ON t_classes.id = student_classes.class_id
+                WHERE student_classes.student_id = %s
+            ''', (student_id,))
+            classes = cursor.fetchall()
+
+            cursor.close()
+
+            return render_template('s_classes.html', classes=classes)
+        else:
+            flash('Invalid class code. Please try again.', 'danger')
+            cursor.close()
+            return redirect(url_for('student'))
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+@app.route('/s_classes')
+def s_classes():
+    if 'student_id' in session:
+        student_id = session['student_id']
+        cursor = mysql.connection.cursor()
+        cursor.execute('''
+            SELECT t_classes.class_name, t_classes.class_code
+            FROM t_classes
+            JOIN student_classes ON t_classes.id = student_classes.class_id
+            WHERE student_classes.student_id = %s
+        ''', (student_id,))
+        classes = cursor.fetchall()
+        cursor.close()
+        
+        return render_template('s_classes.html', classes=classes)
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+    
+@app.route('/s_classes/info/<class_code>')
+def s_class_info(class_code):
+    if 'student_id' in session:
+        cursor = mysql.connection.cursor()
+        cursor.execute('''
+            SELECT class_name, class_code 
+            FROM t_classes 
+            WHERE class_code = %s
+        ''', (class_code,))
+        class_data = cursor.fetchone()
+        cursor.close()
+
+        if class_data:
+            return render_template('s_class_info.html', class_data=class_data)
+        else:
+            flash('Class not found.', 'danger')
+            return redirect(url_for('s_classes'))  # Redirect back to the list of classes
+    else:
+        flash('You need to log in first.', 'danger')
+        return redirect(url_for('login'))
+
 
 if __name__=='__main__':
     app.run(debug=True)

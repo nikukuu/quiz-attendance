@@ -1,0 +1,14 @@
+{% extends "student.html" %}
+{% block title %} Class Information {% endblock %}
+
+{% block content %}
+<div class="class-info-container">
+    {% if class_data %}
+        <h2>Class Name: {{ class_data[0] }}</h2>  <!-- class_name -->
+        <p>Class Code: {{ class_data[1] }}</p>  <!-- class_code -->
+        <!-- Add more class details here if necessary -->
+    {% else %}
+        <p>Class not found.</p>
+    {% endif %}
+</div>
+{% endblock %}

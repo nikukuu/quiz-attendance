@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 04, 2024 at 07:40 AM
+-- Generation Time: Nov 30, 2024 at 03:21 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,6 +34,14 @@ CREATE TABLE `quizzes` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `quizzes`
+--
+
+INSERT INTO `quizzes` (`quiz_id`, `class_code`, `quiz_title`, `created_at`) VALUES
+(6, 'OWJQ2B', 'Quiz 1', '2024-11-23 13:44:31'),
+(8, 'OWJQ2B', 'Prelim', '2024-11-25 15:48:45');
+
 -- --------------------------------------------------------
 
 --
@@ -45,6 +53,20 @@ CREATE TABLE `quiz_options` (
   `question_id` int(11) NOT NULL,
   `option_text` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `quiz_options`
+--
+
+INSERT INTO `quiz_options` (`option_id`, `question_id`, `option_text`) VALUES
+(1, 2, 'Wired Fire'),
+(2, 2, 'Wireless Fire'),
+(3, 2, 'Wireless Fidelity'),
+(4, 2, 'Wire Fired'),
+(9, 3, 'nana'),
+(10, 3, 'nene'),
+(11, 3, 'nini'),
+(12, 3, 'nuinui');
 
 -- --------------------------------------------------------
 
@@ -59,6 +81,14 @@ CREATE TABLE `quiz_questions` (
   `correct_answer` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `quiz_questions`
+--
+
+INSERT INTO `quiz_questions` (`question_id`, `quiz_id`, `question_text`, `correct_answer`) VALUES
+(2, 6, 'What is Wifi?', 'Wireless Fidelity'),
+(3, 6, 'What\'s my name?', 'nini');
+
 -- --------------------------------------------------------
 
 --
@@ -67,39 +97,19 @@ CREATE TABLE `quiz_questions` (
 
 CREATE TABLE `student` (
   `id` int(11) NOT NULL,
-  `last_name` varchar(255) NOT NULL,
-  `first_name` varchar(255) NOT NULL,
-  `student_id` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL
+  `username` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student`
 --
 
-INSERT INTO `student` (`id`, `last_name`, `first_name`, `student_id`, `password`) VALUES
-(2, 'manobal', 'lalisa', '22-11216', '812588');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `student_classes`
---
-
-CREATE TABLE `student_classes` (
-  `student_id` varchar(50) NOT NULL,
-  `class_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `student_classes`
---
-
-INSERT INTO `student_classes` (`student_id`, `class_id`) VALUES
-('22-11216', 12),
-('22-11216', 13),
-('22-11216', 14),
-('22-11216', 15);
+INSERT INTO `student` (`id`, `username`, `email`, `password`) VALUES
+(1, 'lou', 'lou@gmail.com', 'loulou'),
+(2, 'gelay', 'gelay@gmail.com', 'gelay'),
+(3, 'nigga', 'nigga@gmail.com', 'nigga1520');
 
 -- --------------------------------------------------------
 
@@ -141,10 +151,7 @@ CREATE TABLE `t_classes` (
 --
 
 INSERT INTO `t_classes` (`id`, `class_name`, `class_code`, `teacher_username`, `created_at`) VALUES
-(12, 'AppDev2', 'JIVFSP', 'nini', '2024-12-02 22:39:55'),
-(13, 'Sys Int', 'W6GAYJ', 'nini', '2024-12-02 22:42:20'),
-(14, 'WMAD', 'L1053V', 'nini', '2024-12-02 22:46:25'),
-(15, '3WMAD', 'HJ3Q6E', 'nini', '2024-12-02 23:50:57');
+(9, 'Sys Int', 'OWJQ2B', 'nini', '2024-11-23 13:43:24');
 
 --
 -- Indexes for dumped tables
@@ -175,15 +182,7 @@ ALTER TABLE `quiz_questions`
 -- Indexes for table `student`
 --
 ALTER TABLE `student`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `student_id` (`student_id`);
-
---
--- Indexes for table `student_classes`
---
-ALTER TABLE `student_classes`
-  ADD PRIMARY KEY (`student_id`,`class_id`),
-  ADD KEY `class_id` (`class_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `teacher`
@@ -206,25 +205,25 @@ ALTER TABLE `t_classes`
 -- AUTO_INCREMENT for table `quizzes`
 --
 ALTER TABLE `quizzes`
-  MODIFY `quiz_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `quiz_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `quiz_options`
 --
 ALTER TABLE `quiz_options`
-  MODIFY `option_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `option_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `quiz_questions`
 --
 ALTER TABLE `quiz_questions`
-  MODIFY `question_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `question_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `student`
 --
 ALTER TABLE `student`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `teacher`
@@ -236,7 +235,7 @@ ALTER TABLE `teacher`
 -- AUTO_INCREMENT for table `t_classes`
 --
 ALTER TABLE `t_classes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- Constraints for dumped tables
@@ -259,13 +258,6 @@ ALTER TABLE `quiz_options`
 --
 ALTER TABLE `quiz_questions`
   ADD CONSTRAINT `quiz_questions_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quizzes` (`quiz_id`) ON DELETE CASCADE;
-
---
--- Constraints for table `student_classes`
---
-ALTER TABLE `student_classes`
-  ADD CONSTRAINT `student_classes_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `student` (`student_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `student_classes_ibfk_2` FOREIGN KEY (`class_id`) REFERENCES `t_classes` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

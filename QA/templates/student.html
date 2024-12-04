@@ -3,10 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student</title>
+    <title>{% block title %} Student {% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/teacher.css">
+    <link rel="stylesheet" href="/static/css/s_classes.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <p>{{username}}</p>
-    <h2> No classes yet. Have the class code? Enter here. syempre eme muna</h2>
+    <div class="flex-wrapper">
+        <div class="wrapper">
+            <h2>Welcome!</h2>
+            <p>{{ session['student_id'] }}</p>  <!-- Display student ID or name (if available) -->
+            <hr>
+            <h3>Have the class code? Enter it here:</h3>
+            
+            <form action="{{ url_for('s_join_class') }}" method="POST">
+                <input type="text" id="class_code" name="class_code" placeholder="Enter class code" required>
+                <button type="submit">Join Class</button>
+            </form>
+            <hr>
+            <h3>Account</h3>
+            <ul>
+                <li><a href="#">Account Info</a></li>
+                <li><a href="{{ url_for('student_log') }}">Logout</a></li>
+            </ul>
+        </div>
+        <div class="container">
+            {% block content %}
+            <h3>Your Classes:</h3>
+            <div class="classes-container">
+                {% if classes %}
+                    <div class="cards">
+                        {% for cls in classes %}
+                            <div class="card">
+                                <a href="{{ url_for('s_class_info', class_code=cls['class_code']) }}">
+                                    <h3>{{ cls['class_name'] }}</h3>
+                                    <p>Class Code: {{ cls['class_code'] }}</p>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>You haven't joined any classes yet.</p>
+                {% endif %}
+            </div>
+            {% endblock %}
+        </div>
+    </div>
 </body>
 </html>

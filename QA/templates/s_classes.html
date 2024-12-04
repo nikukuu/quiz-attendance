@@ -1,0 +1,22 @@
+{% extends "student.html" %}
+{% block title %} Your Classes {% endblock %}
+
+{% block content %}
+<div class="classes-container">
+    {% if classes %}
+        <h2>Your Classes:</h2>
+        <div class="cards">
+            {% for cls in classes %}
+            <div class="card">
+                <a href="{{ url_for('s_class_info', class_code=cls[1]) }}">
+                    <h3>{{ cls[0] }}</h3>  <!-- class_name -->
+                    <p>Class Code: {{ cls[1] }}</p>  <!-- class_code -->
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>You haven't joined any classes yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
